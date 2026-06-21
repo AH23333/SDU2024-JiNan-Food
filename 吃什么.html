@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什么之书</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f5f5f5;
+            font-family: "微软雅黑", "宋体", Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .food-container {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+            margin-bottom: 40px;
+        }
+
+        /* 森系渐变文字（和按钮配色呼应） */
+        .food-text {
+            font-size: 3vw;
+            font-weight: bold;
+            line-height: 1.6;
+            letter-spacing: 1px;
+            background: linear-gradient(120deg, #48bb78, #38b2ac);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        /* 清新绿按钮 */
+        .refresh-btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #48bb78;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            background-color: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 4px rgba(72, 187, 120, 0.3);
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .food-text {
+                font-size: 6vw;
+            }
+            .refresh-btn {
+                font-size: 16px;
+                padding: 10px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="food-container">
+        <div class="food-text" id="food"></div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">换一个美食</button>
+
+    <script>
+        // 200+种中国常见美食（分大类整理，无序号）
+        const foods = [
+            // 家常菜
+            "西红柿炒鸡蛋", "青椒土豆丝", "鱼香肉丝", "宫保鸡丁", "麻婆豆腐",
+            "红烧肉", "糖醋排骨", "可乐鸡翅", "青椒炒肉丝", "韭菜炒鸡蛋",
+            "番茄牛腩", "土豆烧牛肉", "清炒西兰花", "蒜蓉油麦菜", "香菇青菜",
+            "酸辣土豆丝", "红烧茄子", "豆角炒肉", "洋葱炒鸡蛋", "芹菜炒香干",
+            "黄瓜炒蛋", "腐竹烧肉", "海带排骨汤", "冬瓜丸子汤", "丝瓜炒蛋",
+            "红烧带鱼", "清蒸鲈鱼", "剁椒鱼头", "水煮鱼片", "酸菜鱼汤",
+            "青椒皮蛋", "凉拌黄瓜", "拍黄瓜", "凉拌西红柿", "凉拌三丝",
+            "回锅肉", "青椒肥肠", "猪肝炒青椒", "木耳炒肉", "山药排骨汤",
+            "玉米排骨汤", "萝卜排骨汤", "香菇炖鸡", "小鸡炖蘑菇", "板栗烧鸡",
+            "辣子鸡丁", "土豆丝炒肉", "空心菜炒肉", "油麦菜炒肉", "菠菜炒蛋",
+            // 火锅/串串
+            "麻辣火锅", "清汤火锅", "番茄火锅", "菌汤火锅", "鸳鸯火锅",
+            "潮汕牛肉火锅", "重庆老火锅", "四川串串香", "冷锅串串", "钵钵鸡",
+            "虾滑火锅", "毛肚火锅", "鸭肠火锅", "肥牛火锅", "羊肉火锅",
+            "海鲜火锅", "麻辣香锅", "冒菜", "麻辣烫", "猪肚鸡火锅",
+            // 烧烤/烤串
+            "烤羊肉串", "烤牛肉串", "烤鸡翅", "烤鸡腿", "烤五花肉",
+            "烤鱿鱼", "烤生蚝", "烤扇贝", "烤茄子", "烤韭菜",
+            "烤金针菇", "烤土豆片", "烤青椒", "烤玉米", "烤红薯",
+            "烤面筋", "烤香肠", "烤火腿肠", "烤鸡胗", "烤鸡心",
+            "碳烤排骨", "烤秋刀鱼", "烤黄花鱼", "烤大虾", "烤馒头片",
+            // 主食/面点
+            "米饭", "白粥", "小米粥", "八宝粥", "皮蛋瘦肉粥",
+            "杂粮粥", "炸酱面", "西红柿鸡蛋面", "牛肉面", "肥肠面",
+            "重庆小面", "兰州拉面", "刀削面", "烩面", "热干面",
+            "担担面", "阳春面", "葱油拌面", "云吞面", "螺蛳粉",
+            "过桥米线", "桂林米粉", "酸辣粉", "鸭血粉丝汤", "土豆粉",
+            "包子", "馒头", "花卷", "烧麦", "小笼包",
+            "饺子", "馄饨", "汤圆", "粽子", "手抓饼",
+            "鸡蛋灌饼", "煎饼果子", "肉夹馍", "驴肉火烧", "锅贴",
+            "油条", "豆浆", "豆腐脑", "炒粉", "炒面",
+            // 地方特色菜
+            "北京烤鸭", "天津麻花", "上海生煎包", "南京盐水鸭", "苏州松鼠鳜鱼",
+            "杭州东坡肉", "宁波汤圆", "温州鱼丸", "安徽臭鳜鱼", "福建佛跳墙",
+            "厦门沙茶面", "江西瓦罐汤", "山东煎饼", "河南胡辣汤", "湖北热干面",
+            "湖南剁椒鱼头", "广东肠粉", "顺德双皮奶", "广西螺蛳粉", "海南文昌鸡",
+            "四川水煮鱼", "贵州酸汤鱼", "云南过桥米线", "陕西肉夹馍", "甘肃牛肉面",
+            "青海手抓羊肉", "新疆大盘鸡", "内蒙古烤全羊", "东北锅包肉", "东北地三鲜",
+            // 小吃/甜品
+            "臭豆腐", "糖油粑粑", "糖炒栗子", "冰糖葫芦", "驴打滚",
+            "豌豆黄", "艾窝窝", "麻团", "炸糕", "汤圆",
+            "双皮奶", "姜撞奶", "龟苓膏", "钵仔糕", "马蹄糕",
+            "桂花糕", "绿豆糕", "红豆沙", "绿豆沙", "冰糖炖雪梨",
+            "杨枝甘露", "芒果西米露", "芋圆", "烧仙草", "冰粉",
+            "凉粉", "凉糕", "炸薯条", "炸鸡翅", "爆米花",
+            // 其他
+            "披萨", "汉堡", "炸鸡", "薯条", "寿司",
+            "刺身", "天妇罗", "咖喱饭", "蛋炒饭", "扬州炒饭",
+            "炒年糕", "石锅拌饭", "部队火锅", "炸鸡排", "烤冷面"
+        ];
+
+        // 随机获取美食
+        function getRandomFood() {
+            const randomIndex = Math.floor(Math.random() * foods.length);
+            return foods[randomIndex];
+        }
+
+        // 初始化/刷新美食
+        function refreshFood() {
+            document.getElementById("food").textContent = getRandomFood();
+        }
+
+        // 页面加载显示第一个美食
+        window.onload = refreshFood;
+
+        // 按钮点击换美食
+        document.getElementById("refreshBtn").addEventListener("click", refreshFood);
+    </script>
+</body>
+</html>
